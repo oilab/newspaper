@@ -16,6 +16,7 @@ from html.parser import HTMLParser
 
 from bs4 import UnicodeDammit
 from copy import deepcopy
+from nltk import sent_tokenize
 
 from . import text
 
@@ -188,8 +189,25 @@ class Parser(object):
         return node.getparent()
 
     @classmethod
+    def goodKids(cls, node):
+        children = cls.getChildren(node)
+        good_kids = []
+        for child in children:
+            tc = child.text_content()
+            if tc:
+                sents = sent_tokenize(tc)
+                if len(sents) > 3:
+                    if child.text:
+                        good_kids.append(child)
+                    else:
+                        good_kids.extend([c for c in child if c.text])
+        return good_kids
+
+
+    @classmethod
     def remove(cls, node):
         parent = node.getparent()
+        good_kids = cls.goodKids(node)
         if parent is not None:
             if node.tail:
                 prev = node.getprevious()
@@ -201,6 +219,9 @@ class Parser(object):
                     if not prev.tail:
                         prev.tail = ''
                     prev.tail += ' ' + node.tail
+            for gk in good_kids:
+                if gk != parent:
+                    parent.append(gk)
             node.clear()
             parent.remove(node)
 
