@@ -193,21 +193,25 @@ class Parser(object):
         children = cls.getChildren(node)
         good_kids = []
         for child in children:
+            if child.tag in ['p', 'li', 'span']:
+                continue
             tc = child.text_content()
             if tc:
                 sents = sent_tokenize(tc)
-                if len(sents) > 3:
+                if len(sents) > 5:
                     if child.text:
                         good_kids.append(child)
                     else:
                         good_kids.extend([c for c in child if c.text])
         return good_kids
 
-
     @classmethod
-    def remove(cls, node):
+    def remove(cls, node, keep_good_kids=False):
         parent = node.getparent()
-        good_kids = cls.goodKids(node)
+        if keep_good_kids:
+            good_kids = cls.goodKids(node)
+        else:
+            good_kids = []
         if parent is not None:
             if node.tail:
                 prev = node.getprevious()

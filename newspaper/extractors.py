@@ -17,6 +17,7 @@ from dateutil.parser import parse as date_parser
 import logging
 import re
 import urllib.parse
+from nltk import sent_tokenize, word_tokenize
 
 from tldextract import tldextract
 
@@ -49,8 +50,9 @@ good_paths = ['story', 'article', 'feature', 'featured', 'slides',
 bad_chunks = ['careers', 'contact', 'about', 'faq', 'terms', 'privacy',
               'advert', 'preferences', 'feedback', 'info', 'browse', 'howto',
               'account', 'subscribe', 'donate', 'shop', 'admin']
-bad_domains = ['amazon', 'doubleclick', 'twitter']
+bad_domains = ['amazon', 'doubleclick', 'twitter', 'facebook']
 
+spam_regex = r'((C|c)liquez ici|Pour contacter|Vous souhaitez)'
 
 class ContentExtractor(object):
 
@@ -744,14 +746,17 @@ class ContentExtractor(object):
         i = 0
         parent_nodes = []
         nodes_with_text = []
-
+        text = ''
         for node in nodes_to_check:
             text_node = self.parser.getText(node)
             word_stats = self.stopwords_class(language=self.language).\
                 get_stopword_count(text_node)
             high_link_density = self.is_highlink_density(node)
-            if word_stats.get_stopword_count() > 2 and not high_link_density:
-                nodes_with_text.append(node)
+            if word_stats.get_stopword_count() > 5 and not high_link_density:
+                stripped_content = node.text_content().replace('\n', '').replace('\t', '').replace('\r', '').strip()
+                if node not in nodes_with_text and stripped_content not in text:
+                    nodes_with_text.append(node)
+                    text += ' ' + stripped_content
 
         nodes_number = len(nodes_with_text)
         negative_scoring = 0
@@ -775,9 +780,14 @@ class ContentExtractor(object):
                         boost_score = float(5)
 
             text_node = self.parser.getText(node)
-            word_stats = self.stopwords_class(language=self.language).\
-                get_stopword_count(text_node)
-            upscore = int(word_stats.get_stopword_count() + boost_score)
+            stops = self.stopwords_class(language=self.language)
+            word_stats = stops.get_stopword_count(text_node)
+            capitalized_words = re.findall('(?:\s*\b([A-ZÀÂÇÈÉÊËÎÏÔÙÛÜ+][\w+])\b)+', text_node)
+            non_stop_caps = [w for w in capitalized_words if w.lower() not in stops.STOP_WORDS]
+            spam_heavy = re.findall(spam_regex, text_node)
+            long_sents = [s for s in sent_tokenize(text_node) if len(word_tokenize(s)) > 5]
+            upscore = int(word_stats.get_stopword_count() + boost_score) + len(non_stop_caps) - \
+                len(spam_heavy) + len(long_sents)
 
             parent_node = self.parser.getParent(node)
             self.update_score(parent_node, upscore)
@@ -786,17 +796,11 @@ class ContentExtractor(object):
             if parent_node not in parent_nodes:
                 parent_nodes.append(parent_node)
 
-            # Parent of parent node
-            parent_parent_node = self.parser.getParent(parent_node)
-            if parent_parent_node is not None:
-                self.update_node_count(parent_parent_node, 1)
-                self.update_score(parent_parent_node, upscore / 2)
-                if parent_parent_node not in parent_nodes:
-                    parent_nodes.append(parent_parent_node)
             cnt += 1
             i += 1
 
         top_node_score = 0
+        other_nodes = []
         for e in parent_nodes:
             score = self.get_score(e)
 
@@ -806,7 +810,9 @@ class ContentExtractor(object):
 
             if top_node is None:
                 top_node = e
-        return top_node
+
+        other_nodes = [e for e in parent_nodes if e != top_node and self.get_score(e) >= top_node_score / 2.0]
+        return top_node, other_nodes
 
     def is_boostable(self, node):
         """Alot of times the first paragraph might be the caption under an image
@@ -984,7 +990,7 @@ class ContentExtractor(object):
         on like paragraphs and tables
         """
         nodes_to_check = []
-        for tag in ['p', 'pre', 'td']:
+        for tag in ['p', 'pre', 'td', 'li']:
             items = self.parser.getElementsByTag(doc, tag=tag)
             nodes_to_check += items
         return nodes_to_check

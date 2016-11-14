@@ -123,7 +123,7 @@ class DocumentCleaner(object):
         # class
         naughty_classes = self.parser.xpath_re(doc, self.nauthy_classes_re)
         for node in naughty_classes:
-            self.parser.remove(node)
+            self.parser.remove(node, keep_good_kids=True)
         # name
         naughty_names = self.parser.xpath_re(doc, self.nauthy_names_re)
         for node in naughty_names:

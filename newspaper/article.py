@@ -117,6 +117,9 @@ class Article(object):
         # for the main body of the article
         self.top_node = None
 
+        # Holds possibly other important "top nodes"
+        self.other_nodes = []
+
         # A deepcopied clone of the above object before heavy parsing
         # operations, useful for users to query data in the
         # "most important part of the page"
@@ -220,7 +223,7 @@ class Article(object):
         self.doc = document_cleaner.clean(self.doc)
 
         text = ''
-        self.top_node = self.extractor.calculate_best_node(self.doc)
+        self.top_node, self.other_nodes = self.extractor.calculate_best_node(self.doc)
         if self.top_node is not None:
             video_extractor = VideoExtractor(self.config, self.top_node)
             self.set_movies(video_extractor.get_videos())
