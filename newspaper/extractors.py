@@ -812,6 +812,12 @@ class ContentExtractor(object):
                 top_node = e
 
         other_nodes = [e for e in parent_nodes if e != top_node and self.get_score(e) >= top_node_score / 2.0]
+
+        if len(re.findall(spam_regex, top_node.text_content())):
+            if len(other_nodes):
+                top_node = other_nodes.pop(0)
+            else:
+                top_node = None
         return top_node, other_nodes
 
     def is_boostable(self, node):
