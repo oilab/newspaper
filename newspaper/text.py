@@ -63,9 +63,15 @@ class StopWords(object):
         "[^\\p{Ll}\\p{Lu}\\p{Lt}\\p{Lo}\\p{Nd}\\p{Pc}\\s]")
     TRANS_TABLE = str.maketrans('', '')
     _cached_stop_words = {}
+    LOOKUP_DICT = {'fr': 'french', 'de': 'german', 'en': 'english'}
 
     def __init__(self, language='english'):
-        self.STOP_WORDS = stopwords.words(language)
+        if len(language) == 2:
+            language = self.LOOKUP_DICT.get(language)
+        if language:
+            self.STOP_WORDS = stopwords.words(language)
+        else:
+            self.STOP_WORDS = stopwords.words('english')
 
     def remove_punctuation(self, content):
         # code taken form
