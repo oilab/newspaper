@@ -801,6 +801,9 @@ class ContentExtractor(object):
 
         top_node_score = 0
         other_nodes = []
+
+        parent_nodes = [p for p in parent_nodes if p is not None]
+
         for e in parent_nodes:
             score = self.get_score(e)
 
@@ -813,7 +816,7 @@ class ContentExtractor(object):
 
         other_nodes = [e for e in parent_nodes if e != top_node and self.get_score(e) >= top_node_score / 2.0]
 
-        if len(re.findall(spam_regex, top_node.text_content())):
+        if top_node and len(re.findall(spam_regex, top_node.text_content())):
             if len(other_nodes):
                 top_node = other_nodes.pop(0)
             else:
