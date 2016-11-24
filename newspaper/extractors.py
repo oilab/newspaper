@@ -788,7 +788,6 @@ class ContentExtractor(object):
             long_sents = [s for s in sent_tokenize(text_node) if len(word_tokenize(s)) > 5]
             upscore = int(word_stats.get_stopword_count() + boost_score) + len(non_stop_caps) - \
                 len(spam_heavy) + len(long_sents)
-
             parent_node = self.parser.getParent(node)
             self.update_score(parent_node, upscore)
             self.update_node_count(parent_node, 1)
@@ -816,7 +815,7 @@ class ContentExtractor(object):
 
         other_nodes = [e for e in parent_nodes if e != top_node and self.get_score(e) >= top_node_score / 2.0]
 
-        if top_node and len(re.findall(spam_regex, top_node.text_content())):
+        if len(top_node) and len(re.findall(spam_regex, top_node.text_content())):
             if len(other_nodes):
                 top_node = other_nodes.pop(0)
             else:
