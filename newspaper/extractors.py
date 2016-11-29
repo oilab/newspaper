@@ -791,10 +791,8 @@ class ContentExtractor(object):
             parent_node = self.parser.getParent(node)
             self.update_score(parent_node, upscore)
             self.update_node_count(parent_node, 1)
-
             if parent_node not in parent_nodes:
                 parent_nodes.append(parent_node)
-
             cnt += 1
             i += 1
 
@@ -815,11 +813,14 @@ class ContentExtractor(object):
 
         other_nodes = [e for e in parent_nodes if e != top_node and self.get_score(e) >= top_node_score / 2.0]
 
-        if top_node is not None and len(re.findall(spam_regex, top_node.text_content())):
-            if len(other_nodes):
-                top_node = other_nodes.pop(0)
-            else:
-                top_node = None
+        if top_node is not None:
+            top_quarter = int(len(top_node.text_content())/4)
+            if len(re.findall(spam_regex, top_node.text_content()[:top_quarter])):
+                if len(other_nodes):
+                    top_node = other_nodes.pop(0)
+                else:
+                    top_node = None
+
         return top_node, other_nodes
 
     def is_boostable(self, node):
