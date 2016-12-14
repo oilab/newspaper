@@ -54,6 +54,7 @@ bad_domains = ['amazon', 'doubleclick', 'twitter', 'facebook']
 
 spam_regex = r'((C|c)liquez ici|Pour contacter|Vous souhaitez)'
 
+
 class ContentExtractor(object):
 
     def __init__(self, config):
@@ -798,7 +799,6 @@ class ContentExtractor(object):
 
         top_node_score = 0
         other_nodes = []
-
         parent_nodes = [p for p in parent_nodes if p is not None]
 
         for e in parent_nodes:
@@ -814,7 +814,7 @@ class ContentExtractor(object):
         other_nodes = [e for e in parent_nodes if e != top_node and self.get_score(e) >= top_node_score / 2.0]
 
         if top_node is not None:
-            top_quarter = int(len(top_node.text_content())/4)
+            top_quarter = int(len(top_node.text_content()) / 4)
             if len(re.findall(spam_regex, top_node.text_content()[:top_quarter])):
                 if len(other_nodes):
                     top_node = other_nodes.pop(0)
