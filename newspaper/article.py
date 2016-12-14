@@ -234,6 +234,18 @@ class Article(object):
         text = ''
         self.top_node, self.other_nodes = self.extractor.calculate_best_node(self.doc)
 
+        if self.top_node is None:
+            # try detecting language from title
+            try:
+                lang = detect(title)
+                self.extractor.update_language(lang)
+                output_formatter.update_language(lang)
+            except LangDetectException:
+                logging.exception('issue detecting language!')
+
+            self.top_node, self.other_nodes = self.extractor.calculate_best_node(self.doc)
+
+
         if self.top_node is not None:
             video_extractor = VideoExtractor(self.config, self.top_node)
             self.set_movies(video_extractor.get_videos())
