@@ -22,6 +22,8 @@ from .outputformatters import OutputFormatter
 from .utils import (URLHelper, RawHelper, extend_config,
                     get_available_languages, extract_meta_refresh)
 from .videos.extractors import VideoExtractor
+from langdetect import detect
+from langdetect.lang_detect_exception import LangDetectException
 
 log = logging.getLogger(__name__)
 
@@ -120,6 +122,9 @@ class Article(object):
         # for the main body of the article
         self.top_node = None
 
+        # Holds possibly other important "top nodes"
+        self.other_nodes = []
+
         # A deepcopied clone of the above object before heavy parsing
         # operations, useful for users to query data in the
         # "most important part of the page"
@@ -190,9 +195,16 @@ class Article(object):
         meta_lang = self.extractor.get_meta_lang(self.clean_doc)
         self.set_meta_language(meta_lang)
 
-        if self.config.use_meta_language:
+        if self.meta_lang and self.config.use_meta_language:
             self.extractor.update_language(self.meta_lang)
             output_formatter.update_language(self.meta_lang)
+        else:
+            try:
+                lang = detect(title)
+                self.extractor.update_language(lang)
+                output_formatter.update_language(lang)
+            except LangDetectException:
+                logging.exception('issue detecting language!')
 
         meta_favicon = self.extractor.get_favicon(self.clean_doc)
         self.set_meta_favicon(meta_favicon)
@@ -223,7 +235,20 @@ class Article(object):
         self.doc = document_cleaner.clean(self.doc)
 
         text = ''
-        self.top_node = self.extractor.calculate_best_node(self.doc)
+        self.top_node, self.other_nodes = self.extractor.calculate_best_node(self.doc)
+
+        if self.top_node is None:
+            # try detecting language from title
+            try:
+                lang = detect(title)
+                self.extractor.update_language(lang)
+                output_formatter.update_language(lang)
+            except LangDetectException:
+                logging.exception('issue detecting language!')
+
+            self.top_node, self.other_nodes = self.extractor.calculate_best_node(self.doc)
+
+
         if self.top_node is not None:
             video_extractor = VideoExtractor(self.config, self.top_node)
             self.set_movies(video_extractor.get_videos())
