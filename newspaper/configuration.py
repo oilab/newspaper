@@ -87,10 +87,6 @@ class Configuration(object):
         """Language setting must be set in this method b/c non-occidental
         (western) languages require a seperate stopwords class.
         """
-        if not language or len(language) != 2:
-            raise Exception("Your input language must be a 2 char language code, \
-                for example: english-->en \n and german-->de")
-
         # If explicitly set language, don't use meta
         self.use_meta_language = False
 

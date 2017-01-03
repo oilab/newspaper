@@ -26,7 +26,7 @@ class DocumentCleaner(object):
             "|communitypromo|runaroundLeft|subscribe|vcard|articleheadings"
             "|date|^print$|popup|author-dropdown|tools|socialtools|byline"
             "|konafilter|KonaFilter|breadcrumbs|^fn$|wp-caption-text"
-            "|legende|ajoutVideo|timestamp|js_replies"
+            "|legende|ajoutVideo|timestamp|js_replies|widget"
         )
         self.regexp_namespace = "http://exslt.org/regular-expressions"
         self.nauthy_ids_re = ("//*[re:test(@id, '%s', 'i')]" %
@@ -80,7 +80,7 @@ class DocumentCleaner(object):
     def clean_article_tags(self, doc):
         articles = self.parser.getElementsByTag(doc, tag='article')
         for article in articles:
-            for attr in ['id', 'name', 'class']:
+            for attr in ['name']:
                 self.parser.delAttribute(article, attr=attr)
         return doc
 
@@ -123,7 +123,7 @@ class DocumentCleaner(object):
         # class
         naughty_classes = self.parser.xpath_re(doc, self.nauthy_classes_re)
         for node in naughty_classes:
-            self.parser.remove(node)
+            self.parser.remove(node, keep_good_kids=True)
         # name
         naughty_names = self.parser.xpath_re(doc, self.nauthy_names_re)
         for node in naughty_names:
@@ -216,7 +216,7 @@ class DocumentCleaner(object):
         bad_divs = 0
         else_divs = 0
         divs = self.parser.getElementsByTag(doc, tag=dom_type)
-        tags = ['a', 'blockquote', 'dl', 'div', 'img', 'ol', 'p',
+        tags = ['blockquote', 'dl', 'div', 'img', 'ol', 'p',
                 'pre', 'table', 'ul']
         for div in divs:
             items = self.parser.getElementsByTags(div, tags)

@@ -12,6 +12,7 @@ import re
 import string
 
 from .utils import FileHelper
+from nltk.corpus import stopwords
 
 TABSSPACE = re.compile(r'[\s\t]+')
 
@@ -60,13 +61,15 @@ class StopWords(object):
 
     TRANS_TABLE = str.maketrans('', '')
     _cached_stop_words = {}
+    LOOKUP_DICT = {'fr': 'french', 'de': 'german', 'en': 'english'}
 
-    def __init__(self, language='en'):
-        if language not in self._cached_stop_words:
-            path = os.path.join('text', 'stopwords-%s.txt' % language)
-            self._cached_stop_words[language] = \
-                set(FileHelper.loadResourceFile(path).splitlines())
-        self.STOP_WORDS = self._cached_stop_words[language]
+    def __init__(self, language='english'):
+        if len(language) == 2:
+            language = self.LOOKUP_DICT.get(language)
+        if language:
+            self.STOP_WORDS = stopwords.words(language)
+        else:
+            self.STOP_WORDS = stopwords.words('english')
 
     def remove_punctuation(self, content):
         # code taken form
