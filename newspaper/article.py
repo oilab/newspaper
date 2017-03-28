@@ -35,6 +35,7 @@ class ArticleException(Exception):
 class Article(object):
     """Article objects abstract an online news article page
     """
+
     def __init__(self, url, title='', source_url='', config=None, **kwargs):
         """The **kwargs argument may be filled with config values, which
         is added into the config object
@@ -168,9 +169,7 @@ class Article(object):
 
     def parse(self):
         if not self.is_downloaded:
-            print('You must `download()` an article before '
-                  'calling `parse()` on it!')
-            raise ArticleException()
+            raise ArticleException('You must `download()` an article before calling `parse()` on it!')
 
         self.doc = self.config.get_parser().fromstring(self.html)
         self.clean_doc = copy.deepcopy(self.doc)
@@ -248,7 +247,6 @@ class Article(object):
 
             self.top_node, self.other_nodes = self.extractor.calculate_best_node(self.doc)
 
-
         if self.top_node is not None:
             video_extractor = VideoExtractor(self.config, self.top_node)
             self.set_movies(video_extractor.get_videos())
@@ -307,7 +305,7 @@ class Article(object):
         sentcount = self.text.split('.')
 
         if (meta_type == 'article' and len(wordcount) >
-                (self.config.MIN_WORD_COUNT)):
+            (self.config.MIN_WORD_COUNT)):
             log.debug('%s verified for article and wc' % self.url)
             return True
 
@@ -349,9 +347,7 @@ class Article(object):
         """Keyword extraction wrapper
         """
         if not self.is_downloaded or not self.is_parsed:
-            print('You must `download()` and `parse()` an article '
-                  'before calling `nlp()` on it!')
-            raise ArticleException()
+            raise ArticleException('You must `download()` and `parse()` an article before calling `nlp()` on it!')
 
         text_keyws = list(nlp.keywords(self.text).keys())
         title_keyws = list(nlp.keywords(self.title).keys())
@@ -398,7 +394,7 @@ class Article(object):
                 os.remove(fname)
             except OSError:
                 pass
-        # os.remove(path)
+                # os.remove(path)
 
     def set_reddit_top_img(self):
         """Wrapper for setting images. Queries known image attributes
@@ -413,9 +409,11 @@ class Article(object):
             elif "timed out" in e.args[0]:
                 log.debug("Download of picture timed out. Top image not set, %s" % e)
             else:
-                log.critical('TypeError other than None type error. Cannot set top image using the Reddit algorithm. Possible error with PIL., %s' % e)
+                log.critical(
+                    'TypeError other than None type error. Cannot set top image using the Reddit algorithm. Possible error with PIL., %s' % e)
         except Exception as e:
-            log.critical('Other error with setting top image using the Reddit algorithm. Possible error with PIL, %s' % e)
+            log.critical(
+                'Other error with setting top image using the Reddit algorithm. Possible error with PIL, %s' % e)
 
     def set_title(self, title):
         if self.title and not title:
@@ -496,7 +494,7 @@ class Article(object):
         """Save langauges in their ISO 2-character form
         """
         if meta_lang and len(meta_lang) >= 2 and \
-           meta_lang in get_available_languages():
+                        meta_lang in get_available_languages():
             self.meta_lang = meta_lang[:2]
 
     def set_meta_keywords(self, meta_keywords):

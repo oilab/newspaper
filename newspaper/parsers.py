@@ -10,6 +10,7 @@ import logging
 import lxml.etree
 import lxml.html
 import lxml.html.clean
+import lxml.html.soupparser
 import re
 import traceback
 from html.parser import HTMLParser
@@ -69,8 +70,12 @@ class Parser(object):
             cls.doc = lxml.html.fromstring(html)
             return cls.doc
         except Exception:
-            traceback.print_exc()
-            return
+            # Bad html ? Let's try to fix it.
+            try:
+                cls.doc = lxml.html.soupparser.fromstring(html)
+                return cls.doc
+            except Exception as exc:
+                raise ValueError('Could not parse HTML.') from exc
 
     @classmethod
     def clean_article_html(cls, node):

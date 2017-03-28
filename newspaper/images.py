@@ -157,10 +157,14 @@ def fetch_url(url, useragent, referer=None, retries=1, dimension=False):
                           (url, referer))
                 return nothing
         finally:
-            if response is not None:
-                response.raw.close()
-                if response.raw._connection:
-                    response.raw._connection.close()
+            if response:
+                try:
+                    response.raw.close()
+                    if response.raw._connection:
+                        response.raw._connection.close()
+                except AttributeError:
+                    # Maybe we're using a caching library like requests-cache which does not have a `close()` method.
+                    pass
 
 
 def fetch_image_dimension(url, useragent, referer=None, retries=1):
